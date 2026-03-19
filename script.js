@@ -1,3 +1,23 @@
+/* ===== RESET ALL DATA ===== */
+/* Run this function in browser console to delete all accounts and data: resetAllData() */
+function resetAllData(){
+    // Get all stored user data to clear certificate entries
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    
+    // Remove certificate entries for each user
+    users.forEach(user => {
+        localStorage.removeItem("certificates_" + user.username);
+    });
+    
+    // Clear main user list and current user
+    localStorage.removeItem("users");
+    localStorage.removeItem("currentUser");
+    
+    // Refresh page to show login screen
+    location.reload();
+    alert("All accounts and data have been deleted successfully!");
+}
+
 /* AUTHENTICATION */
 
 function checkUserLogin(){
@@ -15,7 +35,7 @@ function showLoginPage(){
     loginSection.classList.add("visible");
 
     const containerEl = document.getElementById("container");
-    if (containerEl) containerEl.classList.remove("visible");
+    if (containerEl) containerEl.style.display = "none";
 
     const profileWrap = document.querySelector(".user-profile-wrap");
     if (profileWrap) profileWrap.style.display = "none";
@@ -27,7 +47,7 @@ function showMainApp(){
     loginSection.classList.remove("visible");
 
     const containerEl = document.getElementById("container");
-    if (containerEl) containerEl.classList.add("visible");
+    if (containerEl) containerEl.style.display = "block";
 
     const profileWrap = document.querySelector(".user-profile-wrap");
     if (profileWrap) profileWrap.style.display = "flex";
@@ -399,6 +419,12 @@ const registerForm = document.getElementById("register-form");
 loginForm.style.display = "block";
 registerForm.style.display = "none";
 closeMobileMenu();
+// Reset nav to dashboard
+document.querySelectorAll(".nav-link").forEach(link => {
+link.classList.remove("active");
+});
+const dashboardLink = document.querySelector(`.nav-link[data-page="dashboard"]`);
+if(dashboardLink) dashboardLink.classList.add("active");
 showLoginPage();
 }
 
@@ -535,12 +561,133 @@ p.classList.remove("active");
 
 document.getElementById(page).classList.add("active");
 
+// Update active navigation link
+document.querySelectorAll(".nav-link").forEach(link => {
+link.classList.remove("active");
+});
+const activeLink = document.querySelector(`.nav-link[data-page="${page}"]`);
+if(activeLink) {
+activeLink.classList.add("active");
+}
+
 if(page === "view"){
 loadCertificates();
 }
 
 closeMobileMenu();
 
+// Add to browser history
+window.history.pushState({ page: page }, '', '#' + page);
+
+}
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(event){
+if(event.state && event.state.page){
+const page = event.state.page;
+document.querySelectorAll(".page").forEach(p=>{
+p.classList.remove("active");
+});
+document.getElementById(page).classList.add("active");
+
+document.querySelectorAll(".nav-link").forEach(link => {
+link.classList.remove("active");
+});
+const activeLink = document.querySelector(`.nav-link[data-page="${page}"]`);
+if(activeLink) {
+activeLink.classList.add("active");
+}
+
+if(page === "view"){
+loadCertificates();
+}
+}
+});
+
+/* ===== PHOTO CROPPING FUNCTIONALITY ===== */
+
+let cropper = null;
+let tempPhotoBlob = null;
+
+function openCropModal(imageSrc){
+const cropModalOverlay = document.getElementById("cropModalOverlay");
+const cropperImage = document.getElementById("cropperImage");
+
+cropperImage.src = imageSrc;
+cropModalOverlay.classList.add("active");
+
+// Initialize cropper if not already done
+if(cropper){
+cropper.destroy();
+}
+
+setTimeout(()=>{
+cropper = new Cropper(cropperImage, {
+aspectRatio: NaN,
+viewMode: 1,
+autoCropArea: 0.8,
+responsive: true,
+restore: true,
+guides: true,
+center: true,
+highlight: true,
+cropBoxMovable: true,
+cropBoxResizable: true,
+toggleDragModeOnDblclick: true,
+});
+}, 100);
+}
+
+function closeCropModal(){
+const cropModalOverlay = document.getElementById("cropModalOverlay");
+cropModalOverlay.classList.remove("active");
+if(cropper){
+cropper.destroy();
+cropper = null;
+}
+}
+
+function saveCroppedPhoto(){
+if(!cropper){
+alert("Cropper is not initialized. Please try again.");
+return;
+}
+
+const canvas = cropper.getCroppedCanvas({
+maxWidth: 4096,
+maxHeight: 4096,
+fillColor: '#fff',
+imageSmoothingEnabled: true,
+imageSmoothingQuality: 'high',
+});
+
+if(!canvas){
+alert("Failed to crop photo. Please try again.");
+return;
+}
+
+const croppedImage = canvas.toDataURL();
+capturedPhotoData = croppedImage;
+
+const photoPreview = document.getElementById("photoPreview");
+const photoUploadForm = document.getElementById("photoUploadForm");
+
+if(!photoPreview || !photoUploadForm){
+alert("Form elements not found. Please reload the page.");
+return;
+}
+
+photoPreview.src = croppedImage;
+photoPreview.style.display = "block";
+photoUploadForm.style.display = "block";
+
+// Smooth scroll to form
+setTimeout(()=>{
+photoUploadForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}, 100);
+
+closeCropModal();
+alert("Photo cropped successfully! Now enter certificate details.");
 }
 
 const form = document.getElementById("certificateForm");
@@ -577,6 +724,34 @@ document.getElementById("certificateForm").reset();
 
 }
 
+/* ===== DOWNLOAD FUNCTIONALITY ===== */
+
+function downloadCertificatePhoto(certName, photoData){
+// Convert base64 data to blob
+const byteCharacters = atob(photoData.split(',')[1]);
+const byteNumbers = new Array(byteCharacters.length);
+for(let i = 0; i < byteCharacters.length; i++){
+byteNumbers[i] = byteCharacters.charCodeAt(i);
+}
+const byteArray = new Uint8Array(byteNumbers);
+const blob = new Blob([byteArray], {type: 'image/png'});
+
+// Create download link
+const url = window.URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = certName.replace(/\s+/g, '_') + '_Certificate.png';
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+window.URL.revokeObjectURL(url);
+}
+
+function downloadCertificateLink(certName, certLink){
+// For link-based certificates, open in new tab
+window.open(certLink, '_blank');
+}
+
 function loadCertificates(){
 
 let table=document.getElementById("certificateTable");
@@ -600,11 +775,11 @@ let row=document.createElement("tr");
 
 let actionButtons = "";
 if(cert.photo){
-actionButtons = `<button onclick="viewCertificatePhoto('${cert.name}', '${cert.photo}')" style="background:#3498db;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">View</button> <button onclick="editCertificate(${index})" style="background:#f39c12;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">Edit</button> <button onclick="deleteCertificate(${index})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Delete</button>`;
+actionButtons = `<button onclick="viewCertificatePhoto('${cert.name}', '${cert.photo}')" style="background:#5c6bc0;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#3f51b5'" onmouseout="this.style.background='#5c6bc0'">View</button> <button onclick="downloadCertificatePhoto('${cert.name}', '${cert.photo}')" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Download</button> <button onclick="editCertificate(${index})" style="background:#f39c12;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#d68910'" onmouseout="this.style.background='#f39c12'">Edit</button> <button onclick="deleteCertificate(${index})" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>`;
 }else if(cert.link){
-actionButtons = `<a href="${cert.link}" target="_blank" style="background:#3498db;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-block;margin-right:5px;">View</a> <button onclick="editCertificate(${index})" style="background:#f39c12;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">Edit</button> <button onclick="deleteCertificate(${index})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Delete</button>`;
+actionButtons = `<a href="${cert.link}" target="_blank" style="background:#5c6bc0;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-block;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#3f51b5'" onmouseout="this.style.background='#5c6bc0'">View</a> <button onclick="downloadCertificateLink('${cert.name}', '${cert.link}')" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Download</button> <button onclick="editCertificate(${index})" style="background:#f39c12;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#d68910'" onmouseout="this.style.background='#f39c12'">Edit</button> <button onclick="deleteCertificate(${index})" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>`;
 }else{
-actionButtons = `<button onclick="editCertificate(${index})" style="background:#f39c12;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">Edit</button> <button onclick="deleteCertificate(${index})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Delete</button>`;
+actionButtons = `<button onclick="editCertificate(${index})" style="background:#f39c12;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#d68910'" onmouseout="this.style.background='#f39c12'">Edit</button> <button onclick="deleteCertificate(${index})" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>`;
 }
 
 row.innerHTML=`
@@ -644,11 +819,11 @@ const actualIndex = certificates.indexOf(cert);
 
 let actionButtons = "";
 if(cert.photo){
-actionButtons = `<button onclick="viewCertificatePhoto('${cert.name}', '${cert.photo}')" style="background:#3498db;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">View</button> <button onclick="editCertificate(${actualIndex})" style="background:#f39c12;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">Edit</button> <button onclick="deleteCertificate(${actualIndex})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Delete</button>`;
+actionButtons = `<button onclick="viewCertificatePhoto('${cert.name}', '${cert.photo}')" style="background:#5c6bc0;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#3f51b5'" onmouseout="this.style.background='#5c6bc0'">View</button> <button onclick="downloadCertificatePhoto('${cert.name}', '${cert.photo}')" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Download</button> <button onclick="editCertificate(${actualIndex})" style="background:#f39c12;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#d68910'" onmouseout="this.style.background='#f39c12'">Edit</button> <button onclick="deleteCertificate(${actualIndex})" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>`;
 }else if(cert.link){
-actionButtons = `<a href="${cert.link}" target="_blank" style="background:#3498db;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-block;margin-right:5px;">View</a> <button onclick="editCertificate(${actualIndex})" style="background:#f39c12;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">Edit</button> <button onclick="deleteCertificate(${actualIndex})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Delete</button>`;
+actionButtons = `<a href="${cert.link}" target="_blank" style="background:#5c6bc0;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-block;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#3f51b5'" onmouseout="this.style.background='#5c6bc0'">View</a> <button onclick="downloadCertificateLink('${cert.name}', '${cert.link}')" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Download</button> <button onclick="editCertificate(${actualIndex})" style="background:#f39c12;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#d68910'" onmouseout="this.style.background='#f39c12'">Edit</button> <button onclick="deleteCertificate(${actualIndex})" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>`;
 }else{
-actionButtons = `<button onclick="editCertificate(${actualIndex})" style="background:#f39c12;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;margin-right:5px;">Edit</button> <button onclick="deleteCertificate(${actualIndex})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Delete</button>`;
+actionButtons = `<button onclick="editCertificate(${actualIndex})" style="background:#f39c12;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#d68910'" onmouseout="this.style.background='#f39c12'">Edit</button> <button onclick="deleteCertificate(${actualIndex})" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.3s ease;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>`;
 }
 
 row.innerHTML = `
@@ -677,10 +852,8 @@ const file = e.target.files[0];
 if(file){
 const reader = new FileReader();
 reader.onload = function(event){
-const preview = document.getElementById("photoPreview");
-preview.src = event.target.result;
-preview.style.display = "block";
-document.getElementById("photoUploadForm").style.display = "block";
+// Open crop modal instead of directly showing preview
+openCropModal(event.target.result);
 };
 reader.readAsDataURL(file);
 }
@@ -697,32 +870,32 @@ document.getElementById("certificatePhoto").value = "";
 
 function handlePhotoUpload(event){
 event.preventDefault();
-const photoInput = document.getElementById("certificatePhoto");
-const name = document.getElementById("photoCertName").value;
-const issuer = document.getElementById("photoCertIssuer").value;
+
+const name = document.getElementById("photoCertName").value.trim();
+const issuer = document.getElementById("photoCertIssuer").value.trim();
 const date = document.getElementById("photoCertDate").value;
 
-if(photoInput.files.length === 0){
-alert("Please select a photo");
+if(!name || !issuer || !date){
+alert("Please fill in all required fields");
 return;
 }
 
-const file = photoInput.files[0];
-const reader = new FileReader();
-
-reader.onload = function(event){
-const photoData = event.target.result;
+if(!capturedPhotoData){
+alert("Please upload or capture a photo first");
+return;
+}
 
 const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 const userCertificatesKey = "certificates_" + currentUser.username;
 let certificates = JSON.parse(localStorage.getItem(userCertificatesKey)) || [];
 
+try {
 certificates.push({
 name: name,
 issuer: issuer,
 date: date,
 link: "",
-photo: photoData
+photo: capturedPhotoData
 });
 
 localStorage.setItem(userCertificatesKey, JSON.stringify(certificates));
@@ -731,9 +904,16 @@ alert("Certificate Saved Successfully");
 
 document.getElementById("photoUploadForm").reset();
 document.getElementById("photoPreview").style.display = "none";
-};
+document.getElementById("photoCertName").value = "";
+document.getElementById("photoCertIssuer").value = "";
+document.getElementById("photoCertDate").value = "";
+capturedPhotoData = null;
 
-reader.readAsDataURL(file);
+// Redirect to view certificates
+showPage("view");
+} catch(error){
+alert("Error saving certificate: " + error.message);
+}
 }
 
 function viewCertificatePhoto(certName, photoData){
@@ -786,7 +966,9 @@ audio: false
 .then(function(stream){
 cameraStream = stream;
 video.srcObject = stream;
+video.onloadedmetadata = function() {
 video.play();
+};
 })
 .catch(function(error){
 alert("Unable to access camera. Please check permissions. Error: " + error.message);
@@ -817,34 +999,45 @@ captureBtn.style.display = "block";
 retakeBtn.style.display = "none";
 form.style.display = "none";
 
-capturedPhotoData = null;
+// Don't clear capturedPhotoData here - it's needed for crop modal
 }
 
 function capturePhoto(){
 const video = document.getElementById("videoStream");
+
+// Add small delay to ensure video is fully loaded
+setTimeout(()=>{
+if(!video || !video.srcObject || video.videoWidth === 0 || video.videoHeight === 0){
+alert("Camera is not ready. Please wait a moment and try again.");
+return;
+}
+
 const canvas = document.createElement("canvas");
 const context = canvas.getContext("2d");
 
 canvas.width = video.videoWidth;
 canvas.height = video.videoHeight;
 
+if(canvas.width === 0 || canvas.height === 0){
+alert("Failed to capture photo. Please try again.");
+return;
+}
+
 context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
 capturedPhotoData = canvas.toDataURL("image/jpeg");
 
-const photo = document.getElementById("capturedPhoto");
-photo.src = capturedPhotoData;
-photo.style.display = "block";
+if(!capturedPhotoData){
+alert("Failed to process photo. Please try again.");
+return;
+}
 
-video.style.display = "none";  // hide video stream, show the captured photo
-
-const captureBtn = document.getElementById("captureBtn");
-const retakeBtn = document.getElementById("retakeBtn");
-const form = document.getElementById("cameraCertificateForm");
-
-captureBtn.style.display = "none";
-retakeBtn.style.display = "block";
-form.style.display = "block";
+// Close camera modal and open crop modal with captured photo
+closeCamera();
+setTimeout(()=>{
+openCropModal(capturedPhotoData);
+}, 300);
+}, 200);
 }
 
 function retakePhoto(){
