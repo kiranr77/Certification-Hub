@@ -5,18 +5,21 @@
 <title>CertifyHub - Certification Management</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Cropper.js Library for Photo Cropping -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <style>
 
 body{
 font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
 margin:0;
-background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+background:#f0f2f5;
 min-height:100vh;
 color:#333;
 display:flex;
 flex-direction:column;
-justify-content:center;
-align-items:center;
+padding-top:70px;
 }
 
 *{box-sizing:border-box}
@@ -24,83 +27,111 @@ align-items:center;
 /* HEADER */
 
 header{
-    background:linear-gradient(135deg,#2c3e50 0%,#34495e 100%);
+    background:linear-gradient(135deg,#1a237e 0%,#283593 100%);
     color:white;
-    padding:20px 30px;
-    display:flex;              /* always show header at top */
+    padding:16px 30px;
+    display:flex;              
     justify-content:space-between;
     align-items:center;
-    box-shadow:0 4px 20px rgba(0,0,0,0.15);
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);
     width:100%;
     position:fixed;
     top:0;
     left:0;
     z-index:100;
+    border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
 header h1{
 margin:0;
-font-size:28px;
+font-size:26px;
 font-weight:700;
+letter-spacing:0.5px;
+}
+
+nav{
+display:flex;
+align-items:center;
+gap:5px;
 }
 
 nav a{
 color:white;
-margin:0 15px;
+padding:8px 16px;
 text-decoration:none;
 cursor:pointer;
 font-weight:500;
-transition:0.3s;
+transition:all 0.3s ease;
+border-radius:6px;
+font-size:14px;
+text-transform:uppercase;
+letter-spacing:0.5px;
 }
 
 nav a:hover{
-opacity:0.8;
+background:rgba(255,255,255,0.15);
+}
+
+nav a.active{
+background:rgba(255,255,255,0.25);
+border-bottom:2px solid #fff;
 }
 
 /* CONTAINER */
 
 .container{
-width:85%;
-max-width:1200px;
-margin-top:120px;
-padding:50px 30px;
-background:rgba(255,255,255,0.95);
-border-radius:20px;
-box-shadow:0 10px 40px rgba(0,0,0,0.1);
-display:none;
+width:100%;
+max-width:1300px;
+margin:0 auto;
+padding:40px 20px;
+background:transparent;
 }
 
 /* CARDS */
 
 .cards{
-display:flex;
-gap:30px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+gap:24px;
 margin-top:40px;
-flex-wrap:wrap;
 }
 
 .card{
 background:white;
-padding:30px;
-border-radius:20px;
-box-shadow:0 10px 30px rgba(0,0,0,0.1);
-flex:1;
-min-width:280px;
-transition:0.3s;
+padding:32px;
+border-radius:12px;
+box-shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.1);
+transition:all 0.3s ease;
+border:1px solid #f0f0f0;
 }
 
 .card:hover{
-transform:translateY(-8px);
+transform:translateY(-4px);
+box-shadow:0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card h3{
+margin-top:0;
+color:#1a237e;
+font-size:18px;
 }
 
 .card button{
-margin-top:15px;
-padding:12px 25px;
+margin-top:20px;
+padding:12px 24px;
 border:none;
-border-radius:25px;
-background:#667eea;
+border-radius:6px;
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
 color:white;
 cursor:pointer;
+font-weight:600;
+transition:all 0.3s ease;
+width:100%;
+}
+
+.card button:hover{
+transform:scale(1.02);
+box-shadow:0 4px 12px rgba(102,126,234,0.4);
 }
 
 /* FORM */
@@ -108,28 +139,47 @@ cursor:pointer;
 form{
 display:flex;
 flex-direction:column;
-gap:15px;
+gap:16px;
 max-width:500px;
 margin:auto;
 }
 
 form input,
-form button{
+form button,
+form textarea{
 width:100%;
-padding:12px;
-font-size:16px;
-border-radius:8px;
+padding:12px 14px;
+font-size:15px;
+border-radius:6px;
+border:1px solid #ddd;
+transition:all 0.3s ease;
 }
 
-form input{
-border:1px solid #ccc;
+form input:focus,
+form textarea:focus{
+outline:none;
+border-color:#667eea;
+box-shadow:0 0 0 3px rgba(102,126,234,0.1);
 }
 
 form button{
-background:#667eea;
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
 color:white;
 border:none;
 cursor:pointer;
+font-weight:600;
+font-size:15px;
+margin-top:8px;
+transition:all 0.3s ease;
+}
+
+form button:hover{
+transform:translateY(-2px);
+box-shadow:0 4px 12px rgba(102,126,234,0.4);
+}
+
+form button:active{
+transform:translateY(0);
 }
 
 /* TABLE */
@@ -138,18 +188,29 @@ table{
 width:100%;
 border-collapse:collapse;
 margin-top:30px;
+background:white;
+border-radius:8px;
+overflow:hidden;
+box-shadow:0 1px 3px rgba(0,0,0,0.08);
 }
 
 th,td{
-padding:12px;
-border-bottom:1px solid #ddd;
+padding:16px;
 text-align:left;
+border-bottom:1px solid #f0f0f0;
 }
 
 th{
-background:#667eea;
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
 color:white;
 font-weight:600;
+font-size:14px;
+text-transform:uppercase;
+letter-spacing:0.5px;
+}
+
+tr:hover{
+background:#f9f9f9;
 }
 
 td{
@@ -183,66 +244,92 @@ text-align:center;
 
 .page{
 display:none;
+animation:fadeIn 0.3s ease-in;
 }
 
-.active{
+.page.active{
 display:block;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(10px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+.page h2{
+color:#1a237e;
+font-size:28px;
+margin-top:0;
+margin-bottom:12px;
+font-weight:700;
 }
 
 /* SEARCH */
 
 .search-container{
-margin-bottom:20px;
+margin-bottom:24px;
 }
 
 .search-container input{
 width:100%;
-padding:12px;
-border-radius:25px;
-border:1px solid #ccc;
+padding:14px 16px;
+border-radius:8px;
+border:1px solid #ddd;
+font-size:15px;
+transition:all 0.3s ease;
+background:white;
+}
+
+.search-container input:focus{
+outline:none;
+border-color:#667eea;
+box-shadow:0 0 0 3px rgba(102,126,234,0.1);
 }
 
 /* PHOTO PREVIEW */
 
 .preview-img{
-max-width:300px;
+max-width:100%;
+height:auto;
 margin-top:20px;
-border-radius:10px;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* SAVE BY PHOTO THEME */
-
 .photo-upload-box{
-width:400px;
+width:100%;
+max-width:350px;
 height:250px;
 border:3px dashed #667eea;
-border-radius:20px;
+border-radius:12px;
 display:flex;
 align-items:center;
 justify-content:center;
 flex-direction:column;
-margin:auto;
+margin:0 auto 30px;
 cursor:pointer;
 background:#f8f9ff;
-transition:0.3s;
+transition:all 0.3s ease;
 }
 
 .photo-upload-box:hover{
 background:#eef0ff;
-transform:scale(1.03);
+border-color:#764ba2;
+transform:translateY(-2px);
 }
 
 .plus-icon{
-font-size:80px;
-color:#ff4d6d;
+font-size:60px;
+color:#667eea;
 font-weight:bold;
+margin-bottom:10px;
 }
 
 .upload-text{
-font-size:18px;
-margin-bottom:20px;
+font-size:16px;
 color:#333;
 font-weight:600;
+text-align:center;
 }
 
 #certificatePhoto{
@@ -266,7 +353,7 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+background:linear-gradient(135deg,#1a237e 0%,#283593 100%);
 align-items:center;
 justify-content:center;
 z-index:200;
@@ -281,20 +368,27 @@ display:flex !important;
 }
 
 .auth-container{
-    background:rgba(255,255,255,0.95);
+    background:white;
     padding:50px 40px;
-    border-radius:20px;
-    box-shadow:0 10px 40px rgba(0,0,0,0.2);
-    max-width:400px;
+    border-radius:12px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+    max-width:420px;
     width:90%;
-    /* flex parent alignment should center it, but add margin auto as extra insurance */
     margin:0 auto;
+    animation:slideUp 0.4s ease;
+}
+
+@keyframes slideUp{
+from{opacity:0;transform:translateY(30px);}
+to{opacity:1;transform:translateY(0);}
 }
 
 .auth-container h2{
 text-align:center;
-color:#333;
+color:#1a237e;
 margin-top:0;
+font-size:24px;
+font-weight:700;
 }
 
 .auth-container .form-group{
@@ -303,49 +397,66 @@ margin-bottom:20px;
 
 .auth-container input{
 width:100%;
-padding:12px;
-border:1px solid #ccc;
-border-radius:8px;
-font-size:16px;
+padding:12px 14px;
+border:1px solid #ddd;
+border-radius:6px;
+font-size:15px;
 box-sizing:border-box;
+transition:all 0.3s ease;
+}
+
+.auth-container input:focus{
+outline:none;
+border-color:#667eea;
+box-shadow:0 0 0 3px rgba(102,126,234,0.1);
 }
 
 .auth-container button{
 width:100%;
 padding:12px;
-background:#667eea;
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
 color:white;
 border:none;
-border-radius:8px;
+border-radius:6px;
 cursor:pointer;
 font-size:16px;
 font-weight:600;
+transition:all 0.3s ease;
+margin-top:8px;
 }
 
 .auth-container button:hover{
-background:#5568d3;
+transform:translateY(-2px);
+box-shadow:0 4px 12px rgba(102,126,234,0.4);
 }
 
 .auth-error{
 color:#e74c3c;
 margin-bottom:15px;
 font-size:14px;
+padding:10px;
+background:#ffebee;
+border-radius:6px;
+border-left:4px solid #e74c3c;
 }
 
 .toggle-form{
 text-align:center;
 margin-top:20px;
 font-size:14px;
+color:#666;
 }
 
 .toggle-form a{
 color:#667eea;
 cursor:pointer;
 text-decoration:none;
+font-weight:600;
+transition:color 0.3s ease;
 }
 
 .toggle-form a:hover{
-text-decoration:underline;
+color:#764ba2;
 }
 
 #register-form{
@@ -356,7 +467,7 @@ display:none;
 display:flex;
 }
 
-.container.visible{
+.container{
 display:block;
 }
 
@@ -513,9 +624,9 @@ background:transparent;
 color:#333;
 cursor:pointer;
 font-size:14px;
-border-radius:8px;
+border-radius:6px;
 text-decoration:none;
-transition:background 0.2s;
+transition:all 0.2s ease;
 }
 
 .profile-dropdown-actions a:hover,
@@ -526,6 +637,9 @@ background:#f5f5f5;
 .profile-dropdown-actions .logout-btn{
 color:#e74c3c;
 font-weight:600;
+margin-top:8px;
+border-top:1px solid #eee;
+padding-top:8px;
 }
 
 .profile-dropdown-actions .logout-btn:hover{
@@ -542,7 +656,6 @@ margin:2px 0;
 color:#333;
 }
 
-/* COMPLETE PROFILE & EDIT PROFILE MODAL */
 .profile-modal-overlay{
 position:fixed;
 top:0;left:0;right:0;bottom:0;
@@ -559,45 +672,56 @@ display:flex;
 
 .profile-modal{
 background:white;
-border-radius:16px;
-padding:30px 40px;
+border-radius:12px;
+padding:40px;
 max-width:420px;
 width:90%;
 max-height:90vh;
 overflow-y:auto;
-box-shadow:0 15px 50px rgba(0,0,0,0.25);
+box-shadow:0 15px 50px rgba(0,0,0,0.3);
+animation:slideUp 0.4s ease;
 }
 
 .profile-modal h2{
 margin-top:0;
 margin-bottom:24px;
-color:#333;
+color:#1a237e;
+font-size:24px;
+font-weight:700;
 }
 
 .profile-modal .form-group{
-margin-bottom:18px;
+margin-bottom:20px;
 }
 
 .profile-modal label{
 display:block;
-margin-bottom:6px;
+margin-bottom:8px;
 font-weight:600;
 font-size:14px;
 color:#333;
 }
 
 .profile-modal input[type="text"],
-.profile-modal input[type="email"]{
+.profile-modal input[type="email"],
+.profile-modal input[type="date"],
+.profile-modal input[type="tel"],
+.profile-modal input[type="password"]{
 width:100%;
-padding:12px;
-border:1px solid #ccc;
-border-radius:8px;
+padding:12px 14px;
+border:1px solid #ddd;
+border-radius:6px;
 font-size:14px;
 box-sizing:border-box;
+transition:all 0.3s ease;
 }
 
-.profile-modal textarea{
-width:100%;
+.profile-modal input:focus,
+.profile-modal textarea:focus{
+outline:none;
+border-color:#667eea;
+box-shadow:0 0 0 3px rgba(102,126,234,0.1);
+}
 padding:12px;
 border:1px solid #ccc;
 border-radius:8px;
@@ -606,7 +730,7 @@ min-height:70px;
 resize:vertical;
 box-sizing:border-box;
 font-family:inherit;
-}
+
 
 .profile-pic-upload{
 width:120px;
@@ -647,35 +771,293 @@ display:none;
 .profile-modal-actions{
 display:flex;
 gap:12px;
-margin-top:24px;
+margin-top:28px;
 }
 
 .profile-modal-actions button{
 flex:1;
-padding:12px;
+padding:12px 16px;
 border:none;
-border-radius:8px;
+border-radius:6px;
 cursor:pointer;
-font-size:15px;
+font-size:14px;
 font-weight:600;
+transition:all 0.3s ease;
 }
 
 .profile-modal-actions .btn-primary{
-background:#667eea;
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
 color:white;
 }
 
 .profile-modal-actions .btn-primary:hover{
-background:#5568d3;
+transform:translateY(-2px);
+box-shadow:0 4px 12px rgba(102,126,234,0.4);
 }
 
 .profile-modal-actions .btn-secondary{
-background:#e0e0e0;
+background:#f0f0f0;
 color:#333;
 }
 
 .profile-modal-actions .btn-secondary:hover{
-background:#d0d0d0;
+background:#e8e8e8;
+}
+
+/* PHOTO CROPPING MODAL */
+
+.crop-modal-overlay{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:rgba(0,0,0,0.8);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:400;
+}
+
+.crop-modal-overlay.active{
+display:flex;
+}
+
+.crop-modal{
+background:white;
+border-radius:12px;
+padding:0;
+max-width:700px;
+width:90%;
+max-height:90vh;
+overflow:hidden;
+box-shadow:0 15px 50px rgba(0,0,0,0.3);
+display:flex;
+flex-direction:column;
+}
+
+.crop-modal-header{
+padding:20px;
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+color:white;
+font-size:18px;
+font-weight:700;
+margin:0;
+}
+
+.crop-modal-container{
+flex:1;
+overflow:auto;
+padding:20px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+#cropperImage{
+max-width:100%;
+max-height:400px;
+}
+
+.crop-modal-footer{
+padding:20px;
+border-top:1px solid #eee;
+display:flex;
+gap:12px;
+justify-content:flex-end;
+background:#f9f9f9;
+}
+
+.crop-modal-footer button{
+padding:10px 24px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:600;
+font-size:14px;
+transition:all 0.3s ease;
+}
+
+.crop-modal-footer .crop-btn-primary{
+background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+color:white;
+}
+
+.crop-modal-footer .crop-btn-primary:hover{
+transform:translateY(-2px);
+box-shadow:0 4px 12px rgba(102,126,234,0.4);
+}
+
+.crop-modal-footer .crop-btn-secondary{
+background:#e8e8e8;
+color:#333;
+}
+
+.crop-modal-footer .crop-btn-secondary:hover{
+background:#d8d8d8;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 768px) {
+  header {
+    padding: 12px 20px;
+  }
+  
+  header h1 {
+    font-size: 20px;
+  }
+  
+  nav {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  nav a {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .container {
+    padding: 30px 15px;
+  }
+  
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+  
+  .page h2 {
+    font-size: 22px;
+  }
+  
+  .page p {
+    font-size: 14px;
+  }
+  
+  table {
+    font-size: 13px;
+  }
+  
+  th, td {
+    padding: 12px 8px;
+  }
+  
+  .crop-modal {
+    max-width: 95vw;
+    width: 95vw;
+  }
+  
+  #cropperImage {
+    max-height: 300px;
+  }
+  
+  form {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  header {
+    padding: 10px 12px;
+  }
+  
+  header h1 {
+    font-size: 18px;
+    letter-spacing: 0;
+  }
+  
+  nav a {
+    padding: 5px 10px;
+    font-size: 11px;
+    margin: 0 2px;
+  }
+  
+  .container {
+    padding: 20px 10px;
+  }
+  
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+  
+  .card h3 {
+    font-size: 16px;
+  }
+  
+  .card p {
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
+  
+  .card button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  .page h2 {
+    font-size: 20px;
+  }
+  
+  .page p {
+    font-size: 13px;
+  }
+  
+  .search-container input {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 10px 6px;
+  }
+  
+  form input,
+  form button,
+  form textarea {
+    font-size: 14px;
+    padding: 10px 10px;
+  }
+  
+  .profile-modal {
+    padding: 25px 20px;
+  }
+  
+  .auth-container {
+    padding: 30px 25px;
+  }
+  
+  .crop-modal-footer {
+    flex-wrap: wrap;
+  }
+  
+  .crop-modal-footer button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1400px;
+  }
+  
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
 }
 
 </style>
@@ -885,9 +1267,13 @@ Already have an account? <a href="#" onclick="toggleForm(event); return false;">
 </div>
 
 <header id="header">
-<h1>CertifyHub</h1>
+<h1>🎓 CertifyHub</h1>
 
 <nav id="navMenu">
+<a href="#" onclick="showPage('dashboard'); return false;" class="nav-link active" data-page="dashboard">Dashboard</a>
+<a href="#" onclick="showPage('add'); return false;" class="nav-link" data-page="add">Add Certificate</a>
+<a href="#" onclick="showPage('photo'); return false;" class="nav-link" data-page="photo">Save by Photo</a>
+<a href="#" onclick="showPage('view'); return false;" class="nav-link" data-page="view">View Certificates</a>
 <div class="user-profile-wrap">
 <button type="button" class="user-profile-btn" id="userProfileBtn" onclick="toggleProfileDropdown(event)" title="User account">
 <span class="user-avatar-initial" id="headerAvatarInitial">?</span>
@@ -910,10 +1296,6 @@ Already have an account? <a href="#" onclick="toggleForm(event); return false;">
 <div class="profile-dropdown-actions">
 <a href="#" onclick="closeProfileDropdown(); openEditProfileModal(); return false;">Edit Profile</a>
 <a href="#" onclick="closeProfileDropdown(); openChangePasswordModal(); return false;">Change Password</a>
-<a href="#" onclick="showPage('dashboard'); closeProfileDropdown(); return false;">Dashboard</a>
-<a href="#" onclick="showPage('add'); closeProfileDropdown(); return false;">Add Certificate</a>
-<a href="#" onclick="showPage('photo'); closeProfileDropdown(); return false;">Save by Photo</a>
-<a href="#" onclick="showPage('view'); closeProfileDropdown(); return false;">View Certificates</a>
 <a href="#" onclick="closeProfileDropdown(); openDeleteAccountModal(); return false;" style="color:#e74c3c;">Delete Account</a>
 <button type="button" class="logout-btn" onclick="closeProfileDropdown(); logout();">Log out</button>
 </div>
@@ -929,26 +1311,29 @@ Already have an account? <a href="#" onclick="toggleForm(event); return false;">
 
 <section id="dashboard" class="page active">
 
-<div style="text-align:center;margin-bottom:40px;">
-<h2>Welcome to CertifyHub</h2>
-<p>Manage and verify your certifications easily</p>
+<div style="text-align:left;margin-bottom:40px;">
+<h2>Welcome Back!</h2>
+<p style="color:#666;font-size:15px;margin-top:-10px;">Manage your certifications in one secure place</p>
 </div>
 
 <div class="cards">
 
 <div class="card">
-<h3>Add Certificate</h3>
+<h3>📝 Add Certificate</h3>
+<p style="color:#666;font-size:14px;margin-bottom:20px;">Manually enter your certification details.</p>
 <button onclick="showPage('add')">Add Certificate</button>
 </div>
 
 <div class="card">
-<h3>View Certificates</h3>
-<button onclick="showPage('view')">View Certificates</button>
+<h3>📸 Save by Photo</h3>
+<p style="color:#666;font-size:14px;margin-bottom:20px;">Quickly save certificates by taking a photo with built-in cropping.</p>
+<button onclick="showPage('photo')">Save by Photo</button>
 </div>
 
 <div class="card">
-<h3>Save by Photo</h3>
-<button onclick="showPage('photo')">Save by Photo</button>
+<h3>️ View Certificates</h3>
+<p style="color:#666;font-size:14px;margin-bottom:20px;">View all your saved certifications in one place.</p>
+<button onclick="showPage('view')">View Certificates</button>
 </div>
 
 </div>
@@ -959,17 +1344,30 @@ Already have an account? <a href="#" onclick="toggleForm(event); return false;">
 
 <section id="add" class="page">
 
-<h2>Add Certificate</h2>
+<h2>Add Certificate Information</h2>
+<p style="color:#666;margin-bottom:30px;font-size:15px;">Enter the details of your certification below.</p>
 
-<form id="certificateForm">
+<form id="certificateForm" style="max-width:600px;">
 
-<input type="text" id="name" placeholder="Certificate Name" required>
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;">Certificate Name *</label>
+<input type="text" id="name" placeholder="e.g. AWS Certified Solutions Architect" required>
+</div>
 
-<input type="text" id="issuer" placeholder="Issued By" required>
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;">Issued By *</label>
+<input type="text" id="issuer" placeholder="e.g. Amazon Web Services" required>
+</div>
 
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;">Issue Date *</label>
 <input type="date" id="date" required>
+</div>
 
-<input type="url" id="link" placeholder="Certificate Link">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;">Certificate Link</label>
+<input type="url" id="link" placeholder="https://example.com/certificate">
+</div>
 
 <button type="submit">Save Certificate</button>
 
@@ -977,16 +1375,31 @@ Already have an account? <a href="#" onclick="toggleForm(event); return false;">
 
 </section>
 
+<!-- PHOTO CROPPING MODAL -->
+<div class="crop-modal-overlay" id="cropModalOverlay">
+<div class="crop-modal">
+<div class="crop-modal-header">Crop Your Certificate Photo</div>
+<div class="crop-modal-container">
+<img id="cropperImage" src="" alt="Crop Image">
+</div>
+<div class="crop-modal-footer">
+<button class="crop-btn-secondary" onclick="closeCropModal()">Cancel</button>
+<button class="crop-btn-primary" onclick="saveCroppedPhoto()">Apply Crop</button>
+</div>
+</div>
+</div>
+
 <!-- SAVE BY PHOTO -->
 <section id="photo" class="page">
 
-<h2 style="text-align:center;margin-bottom:40px;">Save by Photo</h2>
+<h2>Save Certificate by Photo</h2>
+<p style="color:#666;margin-bottom:30px;font-size:15px;">Take a photo or upload an image of your certificate to add it quickly.</p>
 
-<div style="text-align:center;margin-bottom:40px;display:flex;gap:20px;justify-content:center;">
-<button onclick="openCamera()" style="padding:12px 30px;border:none;border-radius:8px;background:#667eea;color:white;cursor:pointer;font-size:16px;font-weight:600;">
+<div style="text-align:center;margin-bottom:40px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+<button onclick="openCamera()" style="padding:14px 28px;border:none;border-radius:8px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;cursor:pointer;font-size:15px;font-weight:600;transition:all 0.3s ease;">
 📷 Take Photo with Camera
 </button>
-<button onclick="document.getElementById('certificatePhoto').click()" style="padding:12px 30px;border:none;border-radius:8px;background:#764ba2;color:white;cursor:pointer;font-size:16px;font-weight:600;">
+<button onclick="document.getElementById('certificatePhoto').click()" style="padding:14px 28px;border:none;border-radius:8px;background:linear-gradient(135deg,#5c6bc0 0%,#6a4c93 100%);color:white;cursor:pointer;font-size:15px;font-weight:600;transition:all 0.3s ease;">
 📁 Upload from Device
 </button>
 </div>
@@ -996,23 +1409,34 @@ Already have an account? <a href="#" onclick="toggleForm(event); return false;">
 
 <!-- Photo Preview Section -->
 <div style="flex:1;min-width:250px;display:flex;justify-content:center;align-items:center;">
-<img id="photoPreview" style="max-width:300px;width:100%;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.15);display:none;">
+<img id="photoPreview" style="max-width:100%;width:100%;max-height:400px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none;">
 </div>
 
 <!-- Photo Upload Form (shown after upload) -->
-<form id="photoUploadForm" style="flex:1;min-width:280px;max-width:350px;background:white;padding:30px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.1);display:none;" onsubmit="handlePhotoUpload(event)">
+<form id="photoUploadForm" style="flex:1;min-width:280px;max-width:400px;background:white;padding:32px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.1);display:none;" onsubmit="handlePhotoUpload(event)">
 
-<input type="text" id="photoCertName" placeholder="Certificate Name" required style="width:100%;padding:12px;margin-bottom:15px;border-radius:8px;border:1px solid #ccc;font-size:14px;box-sizing:border-box;">
+<h3 style="margin-top:0;color:#1a237e;margin-bottom:20px;">Certificate Details</h3>
 
-<input type="text" id="photoCertIssuer" placeholder="Issued By" required style="width:100%;padding:12px;margin-bottom:15px;border-radius:8px;border:1px solid #ccc;font-size:14px;box-sizing:border-box;">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Certificate Name *</label>
+<input type="text" id="photoCertName" placeholder="Certificate Name" required style="width:100%;padding:12px;margin-bottom:0;border-radius:6px;border:1px solid #ddd;font-size:14px;box-sizing:border-box;">
+</div>
 
-<input type="date" id="photoCertDate" required style="width:100%;padding:12px;margin-bottom:20px;border-radius:8px;border:1px solid #ccc;font-size:14px;box-sizing:border-box;">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Issued By *</label>
+<input type="text" id="photoCertIssuer" placeholder="Issued By" required style="width:100%;padding:12px;margin-bottom:0;border-radius:6px;border:1px solid #ddd;font-size:14px;box-sizing:border-box;">
+</div>
 
-<button type="submit" style="padding:12px 20px;border:none;border-radius:8px;background:#764ba2;color:white;cursor:pointer;width:100%;font-weight:600;margin-bottom:10px;">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Issue Date *</label>
+<input type="date" id="photoCertDate" required style="width:100%;padding:12px;margin-bottom:0;border-radius:6px;border:1px solid #ddd;font-size:14px;box-sizing:border-box;">
+</div>
+
+<button type="submit" style="padding:12px 20px;border:none;border-radius:6px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;cursor:pointer;width:100%;font-weight:600;margin-top:20px;margin-bottom:10px;transition:all 0.3s ease;">
 Save Certificate
 </button>
 
-<button type="button" onclick="cancelPhotoUpload()" style="padding:12px 20px;border:none;border-radius:8px;background:#95a5a6;color:white;cursor:pointer;width:100%;font-weight:600;">
+<button type="button" onclick="cancelPhotoUpload()" style="padding:12px 20px;border:none;border-radius:6px;background:#f0f0f0;color:#333;cursor:pointer;width:100%;font-weight:600;transition:all 0.3s ease;">
 Cancel
 </button>
 
@@ -1021,40 +1445,51 @@ Cancel
 </div>
 
 <!-- CAMERA MODAL -->
-<div id="cameraModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;flex-direction:column;align-items:center;justify-content:center;">
+<div id="cameraModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:1000;flex-direction:column;align-items:center;justify-content:center;">
 
 <div style="position:relative;width:90%;max-width:500px;">
 
-<video id="videoStream" style="width:100%;border-radius:10px;display:block;background:black;"></video>
+<video id="videoStream" style="width:100%;border-radius:12px;display:block;background:black;"></video>
 
-<img id="capturedPhoto" style="width:100%;border-radius:10px;display:none;">
+<img id="capturedPhoto" style="width:100%;border-radius:12px;display:none;">
 
-<div style="text-align:center;margin-top:20px;display:flex;gap:10px;justify-content:center;">
+<div style="text-align:center;margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
 
-<button id="captureBtn" onclick="capturePhoto()" style="padding:10px 30px;border:none;border-radius:8px;background:#27ae60;color:white;cursor:pointer;font-size:16px;">
+<button id="captureBtn" onclick="capturePhoto()" style="padding:12px 28px;border:none;border-radius:6px;background:#27ae60;color:white;cursor:pointer;font-size:15px;font-weight:600;transition:all 0.3s ease;">
 Capture Photo
 </button>
 
-<button id="retakeBtn" onclick="retakePhoto()" style="padding:10px 30px;border:none;border-radius:8px;background:#f39c12;color:white;cursor:pointer;font-size:16px;display:none;">
+<button id="retakeBtn" onclick="retakePhoto()" style="padding:12px 28px;border:none;border-radius:6px;background:#f39c12;color:white;cursor:pointer;font-size:15px;font-weight:600;display:none;transition:all 0.3s ease;">
 Retake Photo
 </button>
 
-<button onclick="closeCamera()" style="padding:10px 30px;border:none;border-radius:8px;background:#e74c3c;color:white;cursor:pointer;font-size:16px;">
+<button onclick="closeCamera()" style="padding:12px 28px;border:none;border-radius:6px;background:#e74c3c;color:white;cursor:pointer;font-size:15px;font-weight:600;transition:all 0.3s ease;">
 Close Camera
 </button>
 
 </div>
 
 <!-- Camera Certificate Form -->
-<form id="cameraCertificateForm" style="max-width:400px;margin:20px auto;display:none;" onsubmit="saveCameraPhoto(event)">
+<form id="cameraCertificateForm" style="max-width:500px;margin:20px auto;display:none;background:white;padding:32px;border-radius:12px;" onsubmit="saveCameraPhoto(event)">
 
-<input type="text" id="cameraCertName" placeholder="Certificate Name" required style="width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;">
+<h3 style="margin-top:0;color:#1a237e;margin-bottom:20px;">Certificate Details</h3>
 
-<input type="text" id="cameraCertIssuer" placeholder="Issued By" required style="width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Certificate Name *</label>
+<input type="text" id="cameraCertName" placeholder="Certificate Name" required style="width:100%;padding:12px;margin-bottom:0;border-radius:6px;border:1px solid #ddd;">
+</div>
 
-<input type="date" id="cameraCertDate" required style="width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Issued By *</label>
+<input type="text" id="cameraCertIssuer" placeholder="Issued By" required style="width:100%;padding:12px;margin-bottom:0;border-radius:6px;border:1px solid #ddd;">
+</div>
 
-<button type="submit" style="padding:10px 20px;border:none;border-radius:8px;background:#27ae60;color:white;cursor:pointer;width:100%;">
+<div class="form-group">
+<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Issue Date *</label>
+<input type="date" id="cameraCertDate" required style="width:100%;padding:12px;margin-bottom:0;border-radius:6px;border:1px solid #ddd;">
+</div>
+
+<button type="submit" style="padding:12px 20px;border:none;border-radius:6px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;cursor:pointer;width:100%;font-weight:600;margin-top:20px;transition:all 0.3s ease;">
 Save Certificate
 </button>
 
@@ -1069,17 +1504,17 @@ Save Certificate
 
 </section>
 
-
 <!-- VIEW CERTIFICATES -->
-
 <section id="view" class="page">
 
 <h2>Your Certificates</h2>
+<p style="color:#666;margin-bottom:24px;font-size:15px;">View and manage all your saved certificates below.</p>
 
 <div class="search-container">
-<input type="text" id="searchInput" placeholder="Search certificates" oninput="searchCertificates()">
+<input type="text" id="searchInput" placeholder="🔍 Search certificates by name or issuer..." oninput="searchCertificates()">
 </div>
 
+<div style="background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
 <table>
 
 <thead>
@@ -1094,6 +1529,7 @@ Save Certificate
 <tbody id="certificateTable"></tbody>
 
 </table>
+</div>
 
 </section>
 
